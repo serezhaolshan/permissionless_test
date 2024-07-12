@@ -1,0 +1,15 @@
+# Hardhat files
+cache
+artifacts
+
+
+node_modules
+dist
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+*.d.ts
+.npmrc
+.DS_Store
