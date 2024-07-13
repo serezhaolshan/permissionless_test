@@ -9,34 +9,41 @@ import {
 import { createPublicClient, getContract, http, parseEther } from "viem";
 import { sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
+import {erc7579Actions} from "permissionless/actions/erc7579.js";
+import {pimlicoPaymasterActions} from "permissionless/actions/pimlico";
 
-const signer = privateKeyToAccount("");
+export const apiKey = ""
+
+const privateKey = ""
+
+export const bundlerUrl = `https://api.pimlico.io/v2/sepolia/rpc?apikey=${apiKey}`
+
+const signer = privateKeyToAccount(privateKey);
+
 
 export const publicClient = createPublicClient({
     transport: http("https://rpc.ankr.com/eth_sepolia"),
-});
+})
 
 export const pimlicoBundlerClient = createPimlicoBundlerClient({
-    transport: http("https://api.pimlico.io/v2/sepolia/rpc?apikey="),
+    transport: http(bundlerUrl),
     entryPoint: ENTRYPOINT_ADDRESS_V07,
-});
+}).extend(pimlicoPaymasterActions(ENTRYPOINT_ADDRESS_V07));
 
 export const safeAccount = await signerToSafeSmartAccount(publicClient, {
-    entryPoint: ENTRYPOINT_ADDRESS_V07,
-    signer: signer,
-    saltNonce: 0n, // optional
+    signer,
     safeVersion: "1.4.1",
-});
+    entryPoint: ENTRYPOINT_ADDRESS_V07,
+})
 
 export const smartAccountClient = createSmartAccountClient({
     account: safeAccount,
     entryPoint: ENTRYPOINT_ADDRESS_V07,
     chain: sepolia,
-    bundlerTransport: http(
-        "https://api.pimlico.io/v2/sepolia/rpc?apikey="
-    ),
+    bundlerTransport: http(bundlerUrl),
     middleware: {
-        gasPrice: async () =>
-            (await pimlicoBundlerClient.getUserOperationGasPrice()).fast,
+        gasPrice: async () => {
+            return (await pimlicoBundlerClient.getUserOperationGasPrice()).fast
+        }
     },
-});
+}).extend(erc7579Actions({ entryPoint: ENTRYPOINT_ADDRESS_V07 }))
